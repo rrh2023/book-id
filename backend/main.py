@@ -31,7 +31,7 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 400,
                 'headers': {
-                    # 'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Origin': '*',  # FIX: uncommented
                     'Content-Type': 'application/json'
                 },
                 'body': json.dumps({'error': 'Description is required'})
@@ -48,7 +48,7 @@ def lambda_handler(event, context):
         return {
             'statusCode': 200,
             'headers': {
-                # 'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': '*',  # FIX: uncommented
                 'Content-Type': 'application/json'
             },
             'body': json.dumps({
@@ -62,7 +62,7 @@ def lambda_handler(event, context):
         return {
             'statusCode': 500,
             'headers': {
-                # 'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': '*',  # FIX: uncommented
                 'Content-Type': 'application/json'
             },
             'body': json.dumps({'error': 'Internal server error'})
@@ -89,7 +89,7 @@ Return ONLY the search query, nothing else."""
 
         # Call Claude API
         request_data = {
-            "model": "claude-sonnet-4-20250514",
+            "model": "claude-sonnet-4-5-20251022",  # FIX: corrected model string
             "max_tokens": 100,
             "messages": [
                 {
@@ -129,7 +129,8 @@ def search_google_books(query, max_results=10):
     encoded_query = urllib.parse.quote(query)
     
     # Build the API URL
-    url = f"https://www.googleapis.com/books/v1/volumes?q={encoded_query}&maxResults={max_results}"
+    api_key = os.environ.get('GOOGLE_BOOKS_API_KEY', '')
+    url = f"https://www.googleapis.com/books/v1/volumes?q={encoded_query}&maxResults={max_results}&key={api_key}"
     
     try:
         # Make the request

@@ -24,26 +24,25 @@ function App() {
     setError('');
 
     try {
-    const { data } = await axios.post(LAMBDA_URL, { description });
+      const { data } = await axios.post(LAMBDA_URL, { description });
 
-    if ("message" in data) {
-      throw new Error('No books found');
-    }
+      // FIX: check for empty results instead of checking for a "message" key
+      if (!data.books || data.books.length === 0) {
+        setError('No books found.');
+        return;
+      }
 
-    setBooks(data.books);
-  } catch (err) {
-    console.error('Error:', err);
-    if (axios.isAxiosError(err)) {
+      setBooks(data.books);
+    } catch (err) {
+      console.error('Error:', err);
       setError('Failed to search for books. Please try again.');
-    } else {
-      setError('No books found.');
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
   };
 
-  const clearBooks = async () => {
+  // FIX: removed unnecessary async
+  const clearBooks = () => {
     setSearched(false)
     setLoading(false);
     setBooks([]);
@@ -53,8 +52,8 @@ function App() {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      setSearched(true)
       e.preventDefault();
+      // FIX: removed duplicate setSearched(true) call here, searchBooks sets it
       searchBooks();
     }
   };
@@ -125,7 +124,8 @@ function App() {
         {!loading && books.length > 0 && (
           <div className="space-y-5">
             {books.map((book, index) => (
-              <BookCard key={index} book={book} />
+              // FIX: more stable key using title + index
+              <BookCard key={`${book.title}-${index}`} book={book} />
             ))}
           </div>
         )}
@@ -144,9 +144,15 @@ function BookCard({ book }) {
   return (
     <div className="bg-white rounded-xl p-5 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex gap-5">
       <img
-        src={book.thumbnail || 'https://via.placeholder.com/120x180?text=No+Cover'}
+        src={book.thumbnail}
+        // FIX: use a reliable inline SVG data URI fallback instead of third-party placeholder
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='180' viewBox='0 0 120 180'%3E%3Crect width='120' height='180' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12' fill='%236b7280'%3ENo Cover%3C/text%3E%3C/svg%3E`;
+        }}
         alt={book.title}
-        className="w-30 h-45 object-cover rounded-lg flex-shrink-0 bg-gray-100"
+        // FIX: replaced w-30 h-45 (invalid Tailwind classes) with explicit pixel dimensions
+        className="w-[120px] h-[180px] object-cover rounded-lg flex-shrink-0 bg-gray-100"
       />
       
       <div className="flex-1 min-w-0">
